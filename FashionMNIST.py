@@ -4,7 +4,7 @@ from tensorflow import keras
 # Helper libraries
 import numpy as np
 import matplotlib.pyplot as plt
-
+print(int('1' + '1'))
 fashion_mnist = keras.datasets.fashion_mnist
 (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
 print(train_images.shape)
@@ -43,3 +43,4 @@ for i in range(5):
     plt.imshow(test_images[i], cmap=plt.cm.binary)
     plt.xlabel(class_names[train_labels[i]])
     plt.show()
+
