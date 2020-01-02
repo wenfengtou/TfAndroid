@@ -1,46 +1,43 @@
-# TensorFlow and tf.keras
 import tensorflow as tf
-from tensorflow import keras
-# Helper libraries
-import numpy as np
-import matplotlib.pyplot as plt
-print(int('1' + '1'))
-fashion_mnist = keras.datasets.fashion_mnist
-(train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
-print(train_images.shape)
-print(len(train_labels))
-print(train_labels)
-plt.figure()
-plt.imshow(train_images[0])
-plt.colorbar()
-plt.grid(False)
-class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
-               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
-train_images = train_images / 255.0
-test_images = test_images / 255.0
-model = keras.Sequential([
-    keras.layers.Flatten(input_shape=(28, 28)),
-    keras.layers.Dense(128, activation=tf.nn.relu),
-    keras.layers.Dense(10, activation=tf.nn.softmax)
-])
+try:
+    import tensorflow.python.keras as keras
+except:
+    import tensorflow.keras as keras
+from tensorflow.python.keras import layers
 
-model.compile(optimizer=tf.optimizers.Adam(),
-              loss='sparse_categorical_crossentropy',
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+
+mnist = keras.datasets.mnist
+(x_train,y_train),(x_test,y_test) = mnist.load_data()
+x_train, x_test = x_train/255.0, x_test/255.0  # 除以 255 是为了归一化。
+
+plt.imshow(x_train[0])
+plt.show()
+# Sequential 用于建立序列模型
+# Flatten 层用于展开张量，input_shape 定义输入形状为 28x28 的图像，展开后为 28*28 的张量。
+# Dense 层为全连接层，输出有 128 个神经元，激活函数使用 relu。
+# Dropout 层使用 0.2 的失活率。
+# 再接一个全连接层，激活函数使用 softmax，得到对各个类别预测的概率。
+model = keras.Sequential()
+model.add(layers.Flatten(input_shape=(28,28)))
+model.add(layers.Dense(128,activation="relu"))
+model.add(layers.Dropout(0.2))
+model.add(layers.Dense(10,activation="softmax"))
+
+# 优化器选择 Adam 优化器。
+# 损失函数使用 sparse_categorical_crossentropy，
+# 还有一个损失函数是 categorical_crossentropy，两者的区别在于输入的真实标签的形式，
+# sparse_categorical 输入的是整形的标签，例如 [1, 2, 3, 4]，categorical 输入的是 one-hot 编码的标签。
+model.compile(optimizer="adam",
+              loss="sparse_categorical_crossentropy",
               metrics=['accuracy'])
 
-model.fit(train_images, train_labels, epochs=5)
-
-predictions = model.predict(test_images)
-
-print(class_names[np.argmax(predictions[0])])
-
-plt.figure(figsize=(10,10))
-for i in range(5):
-    plt.subplot(5,5,i+1)
-    plt.xticks([])
-    plt.yticks([])
-    plt.grid(False)
-    plt.imshow(test_images[i], cmap=plt.cm.binary)
-    plt.xlabel(class_names[train_labels[i]])
-    plt.show()
-
+# fit 用于训练模型，对训练数据遍历一次为一个 epoch，这里遍历 5 次。
+# evaluate 用于评估模型，返回的数值分别是损失和指标。
+model.fit(x_train,y_train,epochs=5)
+model.evaluate(x_test,y_test)
+model.save('model_weight.h5')
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+tflite_model = converter.convert()
+open("mnist.tflite", "wb").write(tflite_model)
